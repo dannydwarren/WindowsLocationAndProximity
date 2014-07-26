@@ -1,0 +1,94 @@
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using Windows.ApplicationModel.Core;
+using Windows.Devices.Geolocation;
+using Windows.Foundation;
+using Windows.Foundation.Collections;
+using Windows.Networking.Proximity;
+using Windows.UI.Core;
+using Windows.UI.Xaml;
+using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Controls.Primitives;
+using Windows.UI.Xaml.Data;
+using Windows.UI.Xaml.Input;
+using Windows.UI.Xaml.Media;
+using Windows.UI.Xaml.Navigation;
+
+// The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=234238
+using LocationDemo_Win8.FeatureWrappers;
+
+namespace LocationDemo_Win8
+{
+    /// <summary>
+    /// An empty page that can be used on its own or navigated to within a Frame.
+    /// </summary>
+    public sealed partial class MainPage : Page
+    {
+        public MainPage()
+        {
+            this.InitializeComponent();
+        }
+
+		#region Location
+
+		/// <summary>
+		/// Invoked when this page is about to be displayed in a Frame.
+		/// </summary>
+		/// <param name="e">Event data that describes how this page was reached.  The Parameter
+		/// property is typically used to configure the page.</param>
+		protected override void OnNavigatedTo( NavigationEventArgs e )
+		{
+			ActivateLocationTracking();
+		}
+
+		private async void ActivateLocationTracking()
+		{
+			var position = await LocationWrapper.Instance.GetSingleShotLocationAsync();
+			LogLocation( position );
+
+			//TODO: Uncomment for Constant Tracking.
+			//LocationWrapper.Instance.LocationChanged += LocationChangedHandler;
+			//LocationWrapper.Instance.ActivateContinousLocationTracking();
+		}
+
+		private void LocationChangedHandler( object sender, Geoposition e )
+		{
+			LogLocation( e );
+		}
+
+		private async void LogLocation( Geoposition position )
+		{
+			if ( position == null )
+			{
+				return;
+			}
+
+			LocationPositions.Items.Add(
+				string.Format(
+					"Latitude: {1}, Longitude: {2},{0}Country: {3}, Accuracy: {4},{0}Altitude: {5}, AltitudeAccuracy: {6},{0}Heading: {7}, Speed: {8}",
+					Environment.NewLine,
+					position.Coordinate.Latitude,
+					position.Coordinate.Longitude,
+					position.CivicAddress.Country,	//CivicAddress not supported in WindowsPhone
+					position.Coordinate.Accuracy,
+					position.Coordinate.Altitude,
+					position.Coordinate.AltitudeAccuracy,
+					position.Coordinate.Heading,
+					position.Coordinate.Speed ) );
+
+			//TODO: To show off part of Converting to CivicAddress
+			//string civicAddres = await LocationWrapper.Instance.ConvertGeocoordinateToCivicAddress(position);
+			//LocationPositions.Items.Add(civicAddres);
+
+
+			if ( LocationPositions.Items.Count == 11 )
+				LocationPositions.Items.RemoveAt( 0 );
+		}
+
+		#endregion
+
+
+    }
+}
