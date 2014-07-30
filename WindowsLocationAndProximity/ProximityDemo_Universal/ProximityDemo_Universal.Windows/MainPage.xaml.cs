@@ -68,6 +68,9 @@ namespace ProximityDemo_Universal
 			                                                          {
 				                                                          {
 					                                                          "WindowsPhone", "c6b6f625-0ac3-4dbb-adca-71dd128b7f5b_4c5b9g29w27se!ProximityDemo_Universal.WindowsPhone"
+				                                                          },
+				                                                          {
+					                                                          "WindowsPhone2", "{baa00bef-d711-44aa-b6fb-73d542b98ff1}"
 				                                                          }
 			                                                          };
 		private void AdvertiseForPeers_Click( object sender, RoutedEventArgs e )

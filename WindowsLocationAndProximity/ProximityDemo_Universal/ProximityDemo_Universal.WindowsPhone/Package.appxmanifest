@@ -1,44 +1,30 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Package xmlns="http://schemas.microsoft.com/appx/2010/manifest" xmlns:m2="http://schemas.microsoft.com/appx/2013/manifest" xmlns:m3="http://schemas.microsoft.com/appx/2014/manifest" xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest">
-
-  <Identity Name="c6b6f625-0ac3-4dbb-adca-71dd128b7f5b"
-            Publisher="CN=Danny"
-            Version="1.0.0.0" />
-
-  <mp:PhoneIdentity PhoneProductId="c6b6f625-0ac3-4dbb-adca-71dd128b7f5b" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
-
+  <Identity Name="c6b6f625-0ac3-4dbb-adca-71dd128b7f5b" Publisher="CN=Danny" Version="1.0.0.0" />
+  <mp:PhoneIdentity PhoneProductId="c6b6f625-0ac3-4dbb-adca-71dd128b7f5b" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
   <Properties>
     <DisplayName>ProximityDemo_Universal.WindowsPhone</DisplayName>
     <PublisherDisplayName>Danny</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
-
   <Prerequisites>
     <OSMinVersion>6.3.1</OSMinVersion>
     <OSMaxVersionTested>6.3.1</OSMaxVersionTested>
   </Prerequisites>
-  
   <Resources>
-    <Resource Language="x-generate"/>
+    <Resource Language="x-generate" />
   </Resources>
-
   <Applications>
-    <Application Id="App"
-        Executable="$targetnametoken$.exe"
-        EntryPoint="ProximityDemo_Universal.WindowsPhone.App">
-        <m3:VisualElements
-            DisplayName="ProximityDemo_Universal.WindowsPhone"
-            Square150x150Logo="Assets\Logo.png"
-            Square44x44Logo="Assets\SmallLogo.png"
-            Description="ProximityDemo_Universal.WindowsPhone"
-            ForegroundText="light"
-            BackgroundColor="transparent">
-            <m3:DefaultTile Wide310x150Logo="Assets\WideLogo.png" Square71x71Logo="Assets\Square71x71Logo.png"/>
-            <m3:SplashScreen Image="Assets\SplashScreen.png"/>
-        </m3:VisualElements>
+    <Application Id="App" Executable="$targetnametoken$.exe" EntryPoint="ProximityDemo_Universal.WindowsPhone.App">
+      <m3:VisualElements DisplayName="ProximityDemo_Universal.WindowsPhone" Square150x150Logo="Assets\Logo.png" Square44x44Logo="Assets\SmallLogo.png" Description="ProximityDemo_Universal.WindowsPhone" ForegroundText="light" BackgroundColor="transparent">
+        <m3:DefaultTile Wide310x150Logo="Assets\WideLogo.png" Square71x71Logo="Assets\Square71x71Logo.png">
+        </m3:DefaultTile>
+        <m3:SplashScreen Image="Assets\SplashScreen.png" />
+      </m3:VisualElements>
     </Application>
   </Applications>
   <Capabilities>
     <Capability Name="internetClientServer" />
+    <DeviceCapability Name="proximity" />
   </Capabilities>
 </Package>

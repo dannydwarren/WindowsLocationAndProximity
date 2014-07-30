@@ -269,7 +269,6 @@ namespace ProximityDemo_Universal
 
 			PeerFinder.Start();
 			SearchForPeers();
-			State = PeerFindingState.Searching;
 
 			if ( (PeerFinder.SupportedDiscoveryTypes & PeerDiscoveryTypes.Triggered) == PeerDiscoveryTypes.Triggered )
 			{
@@ -373,6 +372,7 @@ namespace ProximityDemo_Universal
 
 		private async void SearchForPeers()
 		{
+			State = PeerFindingState.Searching;
 			while ( State == PeerFindingState.Searching )
 			{
 				IReadOnlyList<PeerInformation> foundPeers = await FindAvailablePeers();
