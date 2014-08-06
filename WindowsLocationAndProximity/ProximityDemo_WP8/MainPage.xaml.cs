@@ -1,27 +1,32 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Navigation;
 using Windows.ApplicationModel.Core;
 using Windows.Networking.Proximity;
 using Windows.UI.Core;
-using Windows.UI.Xaml;
-using Windows.UI.Xaml.Controls;
-
-// The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=234238
 using LocationDemo_Win8.FeatureWrappers;
+using Microsoft.Phone.Controls;
+using Microsoft.Phone.Shell;
 using ProximityDemo_Win8.FeatureWrappers;
+using ProximityDemo_WP8.Resources;
 
-namespace ProximityDemo_Win8
+namespace ProximityDemo_WP8
 {
-    /// <summary>
-    /// An empty page that can be used on its own or navigated to within a Frame.
-    /// </summary>
-    public sealed partial class MainPage : Page
-    {
-        public MainPage()
-        {
-            this.InitializeComponent();
-        }
+	public partial class MainPage : PhoneApplicationPage
+	{
+		// Constructor
+		public MainPage()
+		{
+			InitializeComponent();
+
+			// Sample code to localize the ApplicationBar
+			//BuildLocalizedApplicationBar();
+		}
+
 
 		#region Proximity
 
@@ -44,8 +49,7 @@ namespace ProximityDemo_Win8
 
 		private void MessageReceivedHandler( string value )
 		{
-			CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
-				CoreDispatcherPriority.Normal, () => MessageReceived.Text = value );
+			Deployment.Current.Dispatcher.BeginInvoke( () => MessageReceived.Text = value );
 		}
 
 		private void StopSubscribingMessage_Click( object sender, RoutedEventArgs e )
@@ -65,14 +69,14 @@ namespace ProximityDemo_Win8
 			}
 		}
 
-	    private Dictionary<string, string> _alternateIdentities = new Dictionary<string, string>
+		private Dictionary<string, string> _alternateIdentities = new Dictionary<string, string>
 	    {
 		    {
 			    "Win_New", "0bb8f684-755d-4948-b4db-37352cb1f70e_4c5b9g29w27se!ProximityDemo_Universal.Windows"
 		    },
-		    {
-			    "WP_New", "{c6b6f625-0ac3-4dbb-adca-71dd128b7f5b}"
-		    },
+			{
+				"WP_New", "{c6b6f625-0ac3-4dbb-adca-71dd128b7f5b}"
+			}
 	    };
 		private void AdvertiseForPeers_Click( object sender, RoutedEventArgs e )
 		{
@@ -80,7 +84,7 @@ namespace ProximityDemo_Win8
 			{
 				NfcWrapper.Instance.StateChanged += NfcStateChanged;
 				NfcWrapper.Instance.PeersFound += NfcPeersFound;
-				NfcWrapper.Instance.AdvertiseForPeers( "WinRT (HOST)", true, _alternateIdentities );
+				NfcWrapper.Instance.AdvertiseForPeers( "WinPhone_Old (HOST)", true, _alternateIdentities );
 			}
 		}
 
@@ -89,7 +93,6 @@ namespace ProximityDemo_Win8
 			if ( e.Payload != null )
 			{
 				var selectedPeer = Peers.SelectedItem as PeerInformation;
-				//Peers.Items.Clear();
 				foreach ( PeerInformation peerInfo in e.Payload )
 				{
 					if ( Peers.Items.OfType<PeerInformation>().All( p => p.DisplayName != peerInfo.DisplayName ) )
@@ -110,7 +113,7 @@ namespace ProximityDemo_Win8
 			if ( NfcWrapper.Instance.State == PeerFindingState.Inactive )
 			{
 				NfcWrapper.Instance.StateChanged += NfcStateChanged;
-				NfcWrapper.Instance.AdvertiseForPeers( "WinRT (PEER)", false, _alternateIdentities );
+				NfcWrapper.Instance.AdvertiseForPeers( "WinPhone_Old (PEER)", false, _alternateIdentities );
 			}
 		}
 
@@ -131,7 +134,7 @@ namespace ProximityDemo_Win8
 				WaitForMessages();
 			}
 
-			CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync( CoreDispatcherPriority.Normal, () =>
+			Deployment.Current.Dispatcher.BeginInvoke( () =>
 			{
 				StateTextBlock.Text = NfcWrapper.Instance.State.ToString();
 			} );
@@ -143,7 +146,7 @@ namespace ProximityDemo_Win8
 				&& NfcWrapper.Instance.PeerSocket != null )
 			{
 				string message = await NfcWrapper.Instance.PeerSocket.ReceiveMessage();
-				CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync( CoreDispatcherPriority.Normal, () =>
+				Deployment.Current.Dispatcher.BeginInvoke( () =>
 				{
 					SocketMessageReceived.Text = string.IsNullOrEmpty( message ) ? string.Empty : message;
 				} );
@@ -152,6 +155,5 @@ namespace ProximityDemo_Win8
 
 
 		#endregion
-
-    }
+	}
 }

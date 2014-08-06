@@ -1,4 +1,16 @@
-﻿using System;
+﻿#if NETFX_CORE
+
+#endif
+
+using System.Diagnostics;
+#if WINDOWS_PHONE
+using System.Windows;
+using System.Windows.Threading;
+using Windows.Storage.Streams;
+
+#endif
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization;
@@ -11,19 +23,6 @@ using Windows.Networking.Sockets;
 using Windows.Storage.Streams;
 using Windows.UI.Core;
 using Windows.UI.Popups;
-#if NETFX_CORE
-
-#endif
-
-#if WINDOWS_PHONE
-
-using System.Windows;
-using LocationAndProximityPoC_WP8.FeatureWrappers;
-using System.Windows.Threading;
-using Windows.Storage.Streams;
-using UnicodeEncoding = Windows.Storage.Streams.UnicodeEncoding;
-
-#endif
 using LocationDemo_Win8.FeatureWrappers;
 using UnicodeEncoding = Windows.Storage.Streams.UnicodeEncoding;
 
@@ -119,9 +118,9 @@ namespace ProximityDemo_Win8.FeatureWrappers
 
 			if ( _activeMessageId == -1 && ProximityMessagingStatus == ProximityMessagingStatus.Idle )
 			{
-			    _activeMessageId =
-			        _proximityDevice.SubscribeForMessage(messageType,
-			            (proximityDevice, proximityMessage) => messageReceivedCallback(proximityMessage.DataAsString));
+				_activeMessageId =
+					_proximityDevice.SubscribeForMessage( messageType,
+						( proximityDevice, proximityMessage ) => messageReceivedCallback( proximityMessage.DataAsString ) );
 				ProximityMessagingStatus = ProximityMessagingStatus.Subscribed;
 			}
 		}
@@ -163,7 +162,7 @@ namespace ProximityDemo_Win8.FeatureWrappers
 
 			if ( _activeMessageId == -1 && ProximityMessagingStatus == ProximityMessagingStatus.Idle )
 			{
-				_activeMessageId = _proximityDevice.PublishMessage( messageType, message);
+				_activeMessageId = _proximityDevice.PublishMessage( messageType, message );
 				ProximityMessagingStatus = ProximityMessagingStatus.Publishing;
 			}
 		}
@@ -214,7 +213,7 @@ namespace ProximityDemo_Win8.FeatureWrappers
 			using ( MemoryStream ms = new MemoryStream( Encoding.Unicode.GetBytes( jsonString ) ) )
 			{
 				DataContractSerializer serializer = new DataContractSerializer( typeof( T ) );
-				return (T)serializer.ReadObject( ms );
+				return (T) serializer.ReadObject( ms );
 			}
 		}
 
@@ -270,9 +269,8 @@ namespace ProximityDemo_Win8.FeatureWrappers
 
 			PeerFinder.Start();
 			SearchForPeers();
-			State = PeerFindingState.Searching;
 
-			if ( (PeerFinder.SupportedDiscoveryTypes & PeerDiscoveryTypes.Triggered) == PeerDiscoveryTypes.Triggered )
+			if ( ( PeerFinder.SupportedDiscoveryTypes & PeerDiscoveryTypes.Triggered ) == PeerDiscoveryTypes.Triggered )
 			{
 				NotifyUser( "You can tap to connect a peer device that is also advertising for a connection." );
 			}
@@ -281,7 +279,7 @@ namespace ProximityDemo_Win8.FeatureWrappers
 				NotifyUser( "Tap to connect is not supported." );
 			}
 
-			if ( (PeerFinder.SupportedDiscoveryTypes & PeerDiscoveryTypes.Browse) != PeerDiscoveryTypes.Browse )
+			if ( ( PeerFinder.SupportedDiscoveryTypes & PeerDiscoveryTypes.Browse ) != PeerDiscoveryTypes.Browse )
 			{
 				NotifyUser( "Peer discovery using Wifi-Direct is not supported." );
 			}
@@ -374,6 +372,7 @@ namespace ProximityDemo_Win8.FeatureWrappers
 
 		private async void SearchForPeers()
 		{
+			State = PeerFindingState.Searching;
 			while ( State == PeerFindingState.Searching )
 			{
 				IReadOnlyList<PeerInformation> foundPeers = await FindAvailablePeers();
@@ -486,47 +485,47 @@ namespace ProximityDemo_Win8.FeatureWrappers
 		Publishing,
 		Subscribed
 	}
- 
-    public class StreamSocketManager : IDisposable
-    {
-        private readonly DataReader _reader;
-        private readonly DataWriter _writer;
-        private readonly CancellationTokenSource receiveMessageCancellationTokenSource = new CancellationTokenSource();
-        public StreamSocketManager(StreamSocket socket)
-        {
-            Socket = socket;
-            _reader = new DataReader(Socket.InputStream);
-            _writer = new DataWriter(Socket.OutputStream);
-        }
 
-        public StreamSocket Socket { get; private set; }
+	public class StreamSocketManager : IDisposable
+	{
+		private readonly DataReader _reader;
+		private readonly DataWriter _writer;
+		private readonly CancellationTokenSource receiveMessageCancellationTokenSource = new CancellationTokenSource();
+		public StreamSocketManager( StreamSocket socket )
+		{
+			Socket = socket;
+			_reader = new DataReader( Socket.InputStream );
+			_writer = new DataWriter( Socket.OutputStream );
+		}
 
-        public async void SendMessage(string message)
-        {
-            await _writer.SendLengthPrefixedStringAsync(message);
-        }
+		public StreamSocket Socket { get; private set; }
 
-        public async Task<string> ReceiveMessage()
-        {
-            Task<string> receiveMessageTask = _reader.ReceiveLengthPrefixedStringAsync();
-            await receiveMessageTask.WaitOrCancel(receiveMessageCancellationTokenSource.Token);
-            if (receiveMessageTask.IsFaulted)
-            {
-                NfcWrapper.NotifyUser("PeerSocket Connection Failed");
-                NfcWrapper.Instance.DisconnectAndClosePeerConnections();
-                return null;
-            }
-            return receiveMessageTask.Result;
-        }
+		public async void SendMessage( string message )
+		{
+			await _writer.SendLengthPrefixedStringAsync( message );
+		}
 
-        public void Dispose()
-        {
-            receiveMessageCancellationTokenSource.Cancel();
-            Socket.Dispose();
-        }
-    }
-    
-    public static class DataReaderWriterExtensions
+		public async Task<string> ReceiveMessage()
+		{
+			Task<string> receiveMessageTask = _reader.ReceiveLengthPrefixedStringAsync();
+			await receiveMessageTask.WaitOrCancel( receiveMessageCancellationTokenSource.Token );
+			if ( receiveMessageTask.IsFaulted )
+			{
+				NfcWrapper.NotifyUser( "PeerSocket Connection Failed" );
+				NfcWrapper.Instance.DisconnectAndClosePeerConnections();
+				return null;
+			}
+			return receiveMessageTask.Result;
+		}
+
+		public void Dispose()
+		{
+			receiveMessageCancellationTokenSource.Cancel();
+			Socket.Dispose();
+		}
+	}
+
+	public static class DataReaderWriterExtensions
 	{
 		private static async Task SendInternalAsync( this DataWriter writer, object value )
 		{
@@ -535,14 +534,14 @@ namespace ProximityDemo_Win8.FeatureWrappers
 
 
 			if ( value is Int32 )
-				writer.WriteInt32( (int)value );
+				writer.WriteInt32( (int) value );
 			else if ( value is UInt32 )
-				writer.WriteUInt32( (uint)value );
+				writer.WriteUInt32( (uint) value );
 			else if ( value is string )
 			{
-				var str = (string)value;
+				var str = (string) value;
 				var unitCount = writer.MeasureString( str );
-				var stringLength = (uint)str.Length;
+				var stringLength = (uint) str.Length;
 				var byteCount = unitCount;
 
 				// Double the number of bytes for UTF16
@@ -622,7 +621,7 @@ namespace ProximityDemo_Win8.FeatureWrappers
 				var byteCount = bytesRead - sizeof( Int32 );
 				result = reader.ReadString( unitCount );
 
-				if ( ((string)result).Length != expectedStringLength )
+				if ( ( (string) result ).Length != expectedStringLength )
 				{
 					throw new Exception( "String encoding broken(?)" );
 				}
@@ -648,17 +647,17 @@ namespace ProximityDemo_Win8.FeatureWrappers
 
 		public static async Task<Int32> ReceiveInt32Async( this DataReader reader )
 		{
-			return (Int32)await reader.ReceiveInternalAsync( typeof( Int32 ) );
+			return (Int32) await reader.ReceiveInternalAsync( typeof( Int32 ) );
 		}
 
 		public static async Task<UInt32> ReceiveUInt32Async( this DataReader reader )
 		{
-			return (UInt32)await reader.ReceiveInternalAsync( typeof( UInt32 ) );
+			return (UInt32) await reader.ReceiveInternalAsync( typeof( UInt32 ) );
 		}
 
 		public static async Task<string> ReceiveLengthPrefixedStringAsync( this DataReader reader )
 		{
-			return (string)await reader.ReceiveInternalAsync( typeof( string ) );
+			return (string) await reader.ReceiveInternalAsync( typeof( string ) );
 		}
 	}
 

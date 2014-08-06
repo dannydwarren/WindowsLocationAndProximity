@@ -11,15 +11,15 @@ using Windows.UI.Xaml.Controls;
 
 namespace ProximityDemo_Universal
 {
-    /// <summary>
-    /// An empty page that can be used on its own or navigated to within a Frame.
-    /// </summary>
-    public sealed partial class MainPage : Page
-    {
-        public MainPage()
-        {
-            this.InitializeComponent();
-        }
+	/// <summary>
+	/// An empty page that can be used on its own or navigated to within a Frame.
+	/// </summary>
+	public sealed partial class MainPage : Page
+	{
+		public MainPage()
+		{
+			this.InitializeComponent();
+		}
 
 
 		#region Proximity
@@ -65,14 +65,15 @@ namespace ProximityDemo_Universal
 		}
 
 		private Dictionary<string, string> _alternateIdentities = new Dictionary<string, string>
-			                                                          {
-				                                                          {
-					                                                          "WindowsPhone", "c6b6f625-0ac3-4dbb-adca-71dd128b7f5b_4c5b9g29w27se!ProximityDemo_Universal.WindowsPhone"
-				                                                          },
-				                                                          {
-					                                                          "WindowsPhone2", "{baa00bef-d711-44aa-b6fb-73d542b98ff1}"
-				                                                          }
-			                                                          };
+		{
+			{
+				"WP_New", "{c6b6f625-0ac3-4dbb-adca-71dd128b7f5b}"
+			},
+			{
+				"WP_Old", "{baa00bef-d711-44aa-b6fb-73d542b98ff1}"
+			}
+		};
+
 		private void AdvertiseForPeers_Click( object sender, RoutedEventArgs e )
 		{
 			if ( NfcWrapper.Instance.State == PeerFindingState.Inactive )
@@ -88,10 +89,13 @@ namespace ProximityDemo_Universal
 			if ( e.Payload != null )
 			{
 				var selectedPeer = Peers.SelectedItem as PeerInformation;
-				Peers.Items.Clear();
+				//Peers.Items.Clear();
 				foreach ( PeerInformation peerInfo in e.Payload )
 				{
-					Peers.Items.Add( peerInfo );
+					if ( Peers.Items.OfType<PeerInformation>().All( p => p.Id != peerInfo.Id ) )
+					{
+						Peers.Items.Add( peerInfo );
+					}
 				}
 				//NOTE: Maintain Selection as peers are found
 				if ( selectedPeer != null && Peers.Items.OfType<PeerInformation>().Any( pi => pi.DisplayName == selectedPeer.DisplayName ) )
@@ -149,5 +153,5 @@ namespace ProximityDemo_Universal
 
 		#endregion
 
-    }
+	}
 }

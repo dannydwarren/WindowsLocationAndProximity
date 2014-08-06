@@ -83,15 +83,15 @@ namespace ProximityDemo_Universal
 			}
 		}
 
-		private Dictionary<string, string> _alternateIdentities = new Dictionary<string, string>
-			                                                          {
-				                                                          {
-					                                                          "Windows", "0bb8f684-755d-4948-b4db-37352cb1f70e_4c5b9g29w27se!ProximityDemo_Universal.Windows"
-				                                                          },
-				                                                          {
-					                                                          "WindowsPhone", "{baa00bef-d711-44aa-b6fb-73d542b98ff1}"
-				                                                          }
-			                                                          };
+	    private Dictionary<string, string> _alternateIdentities = new Dictionary<string, string>
+	    {
+		    {
+			    "Win_New", "0bb8f684-755d-4948-b4db-37352cb1f70e_4c5b9g29w27se!ProximityDemo_Universal.Windows"
+		    },
+		    {
+			    "WP_Old", "{5b4de5d7-6f61-4397-a7b5-4c3dfddfe330}"
+		    }
+	    };
 		private void AdvertiseForPeers_Click( object sender, RoutedEventArgs e )
 		{
 			if ( NfcWrapper.Instance.State == PeerFindingState.Inactive )
@@ -107,10 +107,12 @@ namespace ProximityDemo_Universal
 			if ( e.Payload != null )
 			{
 				var selectedPeer = Peers.SelectedItem as PeerInformation;
-				Peers.Items.Clear();
 				foreach ( PeerInformation peerInfo in e.Payload )
 				{
-					Peers.Items.Add( peerInfo );
+					if ( Peers.Items.OfType<PeerInformation>().All( p => p.Id != peerInfo.Id ) )
+					{
+						Peers.Items.Add( peerInfo );
+					}
 				}
 				//NOTE: Maintain Selection as peers are found
 				if ( selectedPeer != null && Peers.Items.OfType<PeerInformation>().Any( pi => pi.DisplayName == selectedPeer.DisplayName ) )
