@@ -236,6 +236,7 @@ namespace ProximityDemo_Win8.FeatureWrappers
 		}
 
 		public StreamSocketManager PeerSocket { get; private set; }
+		private StreamSocket _socket;
 
 		public event EventHandler StateChanged = delegate { };
 		private void OnStateChanged()
@@ -297,6 +298,7 @@ namespace ProximityDemo_Win8.FeatureWrappers
 				{
 					PeerSocket.Dispose();
 					PeerSocket = null;
+					_socket = null;
 				}
 
 				State = PeerFindingState.Inactive;
@@ -307,26 +309,26 @@ namespace ProximityDemo_Win8.FeatureWrappers
 		{
 			string message = "Connection requested by " + args.PeerInformation.DisplayName + ". Click 'OK' to connect.";
 			string title = "Peer Connection Request";
-			bool connectionAccepted;
-#if NETFX_CORE
+			bool connectionAccepted = true;
+//#if NETFX_CORE
 
-			var dialog = new MessageDialog( message, title );
+//			var dialog = new MessageDialog( message, title );
 
-			string okLabel = "OK";
-			dialog.Commands.Add( new UICommand( okLabel ) );
-			dialog.Commands.Add( new UICommand( "Cancel" ) );
-			IUICommand command = await dialog.ShowAsync();
+//			string okLabel = "OK";
+//			dialog.Commands.Add( new UICommand( okLabel ) );
+//			dialog.Commands.Add( new UICommand( "Cancel" ) );
+//			IUICommand command = await dialog.ShowAsync();
 
-			connectionAccepted = command.Label == okLabel;
-#endif
+//			connectionAccepted = command.Label == okLabel;
+//#endif
 
-#if WINDOWS_PHONE
-			NotifyUser( "Connection requested by " + args.PeerInformation.DisplayName + " and will be automatically accepted for now on Windows Phone." );
-			//TODO: MessageBox.Show must be called on the UI thread otherwise it will not display to the user, 
-			//	but in order to do this we have to dispatch the call by using Deployment.Current.BeginInvoke and the problem with this is the need to get a response. 
-			//	This code needs to be refactored for both WinRT and WP8 so both can be supported correctly and prompt for acceptance.
-			connectionAccepted = true; //MessageBox.Show( message, title, MessageBoxButton.OKCancel ) == MessageBoxResult.OK;
-#endif
+//#if WINDOWS_PHONE
+//			NotifyUser( "Connection requested by " + args.PeerInformation.DisplayName + " and will be automatically accepted for now on Windows Phone." );
+//			//TODO: MessageBox.Show must be called on the UI thread otherwise it will not display to the user, 
+//			//	but in order to do this we have to dispatch the call by using Deployment.Current.BeginInvoke and the problem with this is the need to get a response. 
+//			//	This code needs to be refactored for both WinRT and WP8 so both can be supported correctly and prompt for acceptance.
+//			connectionAccepted = true; //MessageBox.Show( message, title, MessageBoxButton.OKCancel ) == MessageBoxResult.OK;
+//#endif
 
 			if ( connectionAccepted )
 			{
@@ -350,9 +352,11 @@ namespace ProximityDemo_Win8.FeatureWrappers
 					NotifyUser( "Connecting to peer." );
 					break;
 				case TriggeredConnectState.Completed:
-					PeerSocket = new StreamSocketManager( args.Socket );
+					_socket = args.Socket;
+					NotifyUser( "Connected to socket." );
+					PeerSocket = new StreamSocketManager( _socket );
+					NotifyUser( "Connected with manager. You may now send a message." );
 					State = PeerFindingState.Connected;
-					NotifyUser( "Connected. You may now send a message." );
 					break;
 				case TriggeredConnectState.Canceled:
 					NotifyUser( "Canceled finding peer." );
@@ -428,7 +432,10 @@ namespace ProximityDemo_Win8.FeatureWrappers
 			string errorMessage = null;
 			try
 			{
-				PeerSocket = new StreamSocketManager( await PeerFinder.ConnectAsync( peerInformation ) );
+				_socket = await PeerFinder.ConnectAsync( peerInformation );
+				NotifyUser( "Connected to socket." );
+				PeerSocket = new StreamSocketManager( _socket );
+				NotifyUser( "Connected with manager. You may now send a message." );
 				State = PeerFindingState.Connected;
 			}
 			catch ( Exception e )

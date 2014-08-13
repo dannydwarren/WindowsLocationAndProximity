@@ -74,6 +74,9 @@ namespace ProximityDemo_WP8
 		    {
 			    "Win_New", "0bb8f684-755d-4948-b4db-37352cb1f70e_4c5b9g29w27se!ProximityDemo_Universal.Windows"
 		    },
+		    {
+			    "Win_Old", "34fa5942-c870-4b68-ab9f-08091e0524e3_4c5b9g29w27se!ProximityDemo_Win8"
+		    },
 			{
 				"WP_New", "{c6b6f625-0ac3-4dbb-adca-71dd128b7f5b}"
 			}
