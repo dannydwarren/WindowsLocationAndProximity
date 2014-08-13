@@ -13,6 +13,7 @@ using UnicodeEncoding = Windows.Storage.Streams.UnicodeEncoding;
 #endif
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.Serialization;
 using System.Text;
@@ -305,32 +306,49 @@ namespace ProximityDemo_Universal
 
 		private async void ConnectionRequested( object sender, ConnectionRequestedEventArgs args )
 		{
-			string message = "Connection requested by " + args.PeerInformation.DisplayName + ". Click 'OK' to connect.";
-			string title = "Peer Connection Request";
-			bool connectionAccepted;
-#if NETFX_CORE
+			//string message = "Connection requested by " + args.PeerInformation.DisplayName + ". Click 'OK' to connect.";
+			//string title = "Peer Connection Request";
+			bool connectionAccepted = true;
+//#if NETFX_CORE
 
-			var dialog = new MessageDialog( message, title );
+//			var dialog = new MessageDialog( message, title );
 
-			string okLabel = "OK";
-			dialog.Commands.Add( new UICommand( okLabel ) );
-			dialog.Commands.Add( new UICommand( "Cancel" ) );
-			IUICommand command = await dialog.ShowAsync();
+//			string okLabel = "OK";
+//			dialog.Commands.Add( new UICommand( okLabel ) );
+//			dialog.Commands.Add( new UICommand( "Cancel" ) );
+//			IUICommand command = null;
+//			try
+//			{
+//				command = await dialog.ShowAsync();
+//			}
+//			catch (Exception e) 
+//			{
+//				Debugger.Break();
+//				throw;
+//			}
 
-			connectionAccepted = command.Label == okLabel;
-#endif
+//			connectionAccepted = command.Label == okLabel;
+//#endif
 
-#if WINDOWS_PHONE
-			NotifyUser( "Connection requested by " + args.PeerInformation.DisplayName + " and will be automatically accepted for now on Windows Phone." );
-			//TODO: MessageBox.Show must be called on the UI thread otherwise it will not display to the user, 
-			//	but in order to do this we have to dispatch the call by using Deployment.Current.BeginInvoke and the problem with this is the need to get a response. 
-			//	This code needs to be refactored for both WinRT and WP8 so both can be supported correctly and prompt for acceptance.
-			connectionAccepted = true; //MessageBox.Show( message, title, MessageBoxButton.OKCancel ) == MessageBoxResult.OK;
-#endif
+//#if WINDOWS_PHONE
+//			NotifyUser( "Connection requested by " + args.PeerInformation.DisplayName + " and will be automatically accepted for now on Windows Phone." );
+//			//TODO: MessageBox.Show must be called on the UI thread otherwise it will not display to the user, 
+//			//	but in order to do this we have to dispatch the call by using Deployment.Current.BeginInvoke and the problem with this is the need to get a response. 
+//			//	This code needs to be refactored for both WinRT and WP8 so both can be supported correctly and prompt for acceptance.
+//			connectionAccepted = true; //MessageBox.Show( message, title, MessageBoxButton.OKCancel ) == MessageBoxResult.OK;
+//#endif
 
 			if ( connectionAccepted )
 			{
-				await ConnectToPeer( args.PeerInformation );
+				try
+				{
+					await ConnectToPeer( args.PeerInformation );
+				}
+				catch (Exception e)
+				{
+					Debugger.Break();
+					throw;
+				}
 			}
 		}
 

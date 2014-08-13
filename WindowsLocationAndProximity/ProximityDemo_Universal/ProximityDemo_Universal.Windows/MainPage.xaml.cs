@@ -67,10 +67,13 @@ namespace ProximityDemo_Universal
 		private Dictionary<string, string> _alternateIdentities = new Dictionary<string, string>
 		{
 			{
+				"Win_Old", "34fa5942-c870-4b68-ab9f-08091e0524e3_4c5b9g29w27se!ProximityDemo_Win8"
+			},
+			{
 				"WP_New", "{c6b6f625-0ac3-4dbb-adca-71dd128b7f5b}"
 			},
 			{
-				"WP_Old", "{baa00bef-d711-44aa-b6fb-73d542b98ff1}"
+				"WP_Old", "{5b4de5d7-6f61-4397-a7b5-4c3dfddfe330}"
 			}
 		};
 

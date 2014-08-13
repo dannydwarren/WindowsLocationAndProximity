@@ -85,12 +85,15 @@ namespace ProximityDemo_Universal
 
 	    private Dictionary<string, string> _alternateIdentities = new Dictionary<string, string>
 	    {
-		    {
+			{
 			    "Win_New", "0bb8f684-755d-4948-b4db-37352cb1f70e_4c5b9g29w27se!ProximityDemo_Universal.Windows"
-		    },
-		    {
-			    "WP_Old", "{5b4de5d7-6f61-4397-a7b5-4c3dfddfe330}"
-		    }
+			},
+			{
+				"Win_Old", "34fa5942-c870-4b68-ab9f-08091e0524e3_4c5b9g29w27se!ProximityDemo_Win8"
+			},
+			{
+				"WP_Old", "{5b4de5d7-6f61-4397-a7b5-4c3dfddfe330}"
+			}
 	    };
 		private void AdvertiseForPeers_Click( object sender, RoutedEventArgs e )
 		{

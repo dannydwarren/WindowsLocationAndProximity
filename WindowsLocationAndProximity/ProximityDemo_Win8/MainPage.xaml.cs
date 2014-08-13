@@ -65,15 +65,19 @@ namespace ProximityDemo_Win8
 			}
 		}
 
-	    private Dictionary<string, string> _alternateIdentities = new Dictionary<string, string>
-	    {
-		    {
+		private Dictionary<string, string> _alternateIdentities = new Dictionary<string, string>
+		{
+			{
 			    "Win_New", "0bb8f684-755d-4948-b4db-37352cb1f70e_4c5b9g29w27se!ProximityDemo_Universal.Windows"
-		    },
-		    {
-			    "WP_New", "{c6b6f625-0ac3-4dbb-adca-71dd128b7f5b}"
-		    },
-	    };
+			},
+			{
+				"WP_New", "{c6b6f625-0ac3-4dbb-adca-71dd128b7f5b}"
+			},
+			{
+				"WP_Old", "{5b4de5d7-6f61-4397-a7b5-4c3dfddfe330}"
+			}
+		};
+
 		private void AdvertiseForPeers_Click( object sender, RoutedEventArgs e )
 		{
 			if ( NfcWrapper.Instance.State == PeerFindingState.Inactive )
@@ -153,5 +157,5 @@ namespace ProximityDemo_Win8
 
 		#endregion
 
-    }
+	}
 }

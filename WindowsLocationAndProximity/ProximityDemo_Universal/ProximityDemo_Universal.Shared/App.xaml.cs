@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
@@ -37,7 +38,13 @@ namespace ProximityDemo_Universal
         {
             this.InitializeComponent();
             this.Suspending += this.OnSuspending;
+			this.UnhandledException += App_UnhandledException;
         }
+
+		void App_UnhandledException( object sender, UnhandledExceptionEventArgs e )
+		{
+			Debugger.Break();
+		}
 
         /// <summary>
         /// Invoked when the application is launched normally by the end user.  Other entry points
