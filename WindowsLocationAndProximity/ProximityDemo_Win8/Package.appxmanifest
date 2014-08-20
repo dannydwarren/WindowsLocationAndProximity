@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Package xmlns="http://schemas.microsoft.com/appx/2010/manifest">
-  <Identity Name="34fa5942-c870-4b68-ab9f-08091e0524e3" Publisher="CN=Danny" Version="1.0.0.0" />
+  <Identity Name="34fa5942-c870-4b68-ab9f-08091e0524e3" Publisher="CN=Danny" Version="1.0.0.1" />
   <Properties>
     <DisplayName>ProximityDemo_Win8</DisplayName>
     <PublisherDisplayName>Danny</PublisherDisplayName>

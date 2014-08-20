@@ -25,7 +25,7 @@ namespace ProximityDemo_Win8
 
 		#region Proximity
 
-		private static readonly string MESSAGE_TYPE = NfcWrapper.MESSAGE_TYPE_PREFIX + "LocationPoC.Message";
+		private static readonly string MESSAGE_TYPE = "LocationPoC.Message";
 		private void PublishMessage_Click( object sender, RoutedEventArgs e )
 		{
 			NfcWrapper.Instance.StartPublishing( MESSAGE_TYPE, MessageToSend.Text );
@@ -59,9 +59,9 @@ namespace ProximityDemo_Win8
 
 		private void SendSocketMessage_Click( object sender, RoutedEventArgs e )
 		{
-			if ( NfcWrapper.Instance.PeerSocket != null )
+			if ( PeerFinderWrapper.Instance.PeerSocket != null )
 			{
-				NfcWrapper.Instance.PeerSocket.SendMessage( SocketMessageToSend.Text );
+				PeerFinderWrapper.Instance.PeerSocket.SendMessage( SocketMessageToSend.Text );
 			}
 		}
 
@@ -80,11 +80,11 @@ namespace ProximityDemo_Win8
 
 		private void AdvertiseForPeers_Click( object sender, RoutedEventArgs e )
 		{
-			if ( NfcWrapper.Instance.State == PeerFindingState.Inactive )
+			if ( PeerFinderWrapper.Instance.State == PeerFindingState.Inactive )
 			{
-				NfcWrapper.Instance.StateChanged += NfcStateChanged;
-				NfcWrapper.Instance.PeersFound += NfcPeersFound;
-				NfcWrapper.Instance.AdvertiseForPeers( "WinRT (HOST)", true, _alternateIdentities );
+				PeerFinderWrapper.Instance.StateChanged += NfcStateChanged;
+				PeerFinderWrapper.Instance.PeersFound += NfcPeersFound;
+				PeerFinderWrapper.Instance.AdvertiseForPeers( "WinRT (HOST)", true, _alternateIdentities );
 			}
 		}
 
@@ -111,42 +111,42 @@ namespace ProximityDemo_Win8
 
 		private void ListenForPeers_Click( object sender, RoutedEventArgs e )
 		{
-			if ( NfcWrapper.Instance.State == PeerFindingState.Inactive )
+			if ( PeerFinderWrapper.Instance.State == PeerFindingState.Inactive )
 			{
-				NfcWrapper.Instance.StateChanged += NfcStateChanged;
-				NfcWrapper.Instance.AdvertiseForPeers( "WinRT (PEER)", false, _alternateIdentities );
+				PeerFinderWrapper.Instance.StateChanged += NfcStateChanged;
+				PeerFinderWrapper.Instance.AdvertiseForPeers( "WinRT (PEER)", false, _alternateIdentities );
 			}
 		}
 
 		private void Disconnect_Click( object sender, RoutedEventArgs e )
 		{
-			NfcWrapper.Instance.DisconnectAndClosePeerConnections();
+			PeerFinderWrapper.Instance.DisconnectAndClosePeerConnections();
 		}
 
 		private void ConnectToPeer_Click( object sender, RoutedEventArgs e )
 		{
-			NfcWrapper.Instance.ConnectToPeer( (PeerInformation) Peers.SelectedItem );
+			PeerFinderWrapper.Instance.ConnectToPeer( (PeerInformation) Peers.SelectedItem );
 		}
 
 		private void NfcStateChanged( object sender, EventArgs e )
 		{
-			if ( NfcWrapper.Instance.State == PeerFindingState.Connected )
+			if ( PeerFinderWrapper.Instance.State == PeerFindingState.Connected )
 			{
 				WaitForMessages();
 			}
 
 			CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync( CoreDispatcherPriority.Normal, () =>
 			{
-				StateTextBlock.Text = NfcWrapper.Instance.State.ToString();
+				StateTextBlock.Text = PeerFinderWrapper.Instance.State.ToString();
 			} );
 		}
 
 		private async void WaitForMessages()
 		{
-			while ( NfcWrapper.Instance.State == PeerFindingState.Connected
-				&& NfcWrapper.Instance.PeerSocket != null )
+			while ( PeerFinderWrapper.Instance.State == PeerFindingState.Connected
+				&& PeerFinderWrapper.Instance.PeerSocket != null )
 			{
-				string message = await NfcWrapper.Instance.PeerSocket.ReceiveMessage();
+				string message = await PeerFinderWrapper.Instance.PeerSocket.ReceiveMessage();
 				CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync( CoreDispatcherPriority.Normal, () =>
 				{
 					SocketMessageReceived.Text = string.IsNullOrEmpty( message ) ? string.Empty : message;

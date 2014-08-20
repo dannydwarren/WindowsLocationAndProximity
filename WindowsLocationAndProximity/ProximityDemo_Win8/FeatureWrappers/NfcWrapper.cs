@@ -1,20 +1,14 @@
-﻿#if NETFX_CORE
-
-#endif
-
-using System.Diagnostics;
-#if WINDOWS_PHONE
+﻿#if WINDOWS_PHONE
 using System.Windows;
 using System.Windows.Threading;
 using Windows.Storage.Streams;
+using System.Diagnostics;
 
 #endif
 
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Runtime.Serialization;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.Core;
@@ -28,6 +22,8 @@ using UnicodeEncoding = Windows.Storage.Streams.UnicodeEncoding;
 
 namespace ProximityDemo_Win8.FeatureWrappers
 {
+	#region PeerFinding
+
 	public enum PeerFindingState
 	{
 		Inactive,
@@ -37,9 +33,9 @@ namespace ProximityDemo_Win8.FeatureWrappers
 		Connected,
 	}
 
-	public class NfcWrapper
+	public class PeerFinderWrapper
 	{
-		private NfcWrapper()
+		private PeerFinderWrapper()
 		{
 			//TODO: 0 - NfcWrapper.cs Implement Ctor and Initialize Proximity Device	
 			// For more information: http://msdn.microsoft.com/en-us/library/windowsphone/develop/jj207060(v=vs.105).aspx
@@ -59,168 +55,20 @@ namespace ProximityDemo_Win8.FeatureWrappers
 			 *		ProximityMessagingStatus.Idle
 			 * 
 			 */
-
-			_proximityDevice = ProximityDevice.GetDefault();
-
-			ProximityMessagingStatus = _proximityDevice != null ? ProximityMessagingStatus.Idle : ProximityMessagingStatus.NotSupported;
 		}
 
-		private static NfcWrapper _instance;
-		public static NfcWrapper Instance
+		private static PeerFinderWrapper _instance;
+		public static PeerFinderWrapper Instance
 		{
 			get
 			{
 				if ( _instance == null )
-					_instance = new NfcWrapper();
+					_instance = new PeerFinderWrapper();
 				return _instance;
 			}
 		}
 
-		#region Proximity
-
-		public static readonly string MESSAGE_TYPE_PREFIX = "Windows."; //NOTE: This is a mandatory messageType prefix
-
-		private readonly ProximityDevice _proximityDevice;
-		private long _activeMessageId = -1;
-
-		public event EventHandler ConnectionStatusChanged = delegate { };
-		private void OnConnectionStatusChanged()
-		{
-			ConnectionStatusChanged( this, EventArgs.Empty );
-		}
-
-		private ProximityMessagingStatus _proximityMessagingStatus;
 		private PeerFindingState _state;
-
-		public ProximityMessagingStatus ProximityMessagingStatus
-		{
-			get { return _proximityMessagingStatus; }
-			set
-			{
-				if ( value == _proximityMessagingStatus )
-					return;
-
-				_proximityMessagingStatus = value;
-				OnConnectionStatusChanged();
-			}
-		}
-
-		public void SubscribeForMessage( string messageType, Action<string> messageReceivedCallback )
-		{
-			//TODO: 1.0 - NfcWrapper.cs Implement SubscribeForMessage
-			/*
-			 * if _activeMessageId field == -1 (if a message is not currently being processed) and ProximityMessagingStatus is Idle
-			 *	Use the _proximityDevice to SubscribeForMessage and set _activeMessageId to the returned value
-			 *		use a lambda to call the callback ex: (s, m) => messageReceivedCallback(m.DataAsString)
-			 *	Set ProximityMessagingStatus to Subscribed
-			 * 
-			 */
-
-			if ( _activeMessageId == -1 && ProximityMessagingStatus == ProximityMessagingStatus.Idle )
-			{
-				_activeMessageId =
-					_proximityDevice.SubscribeForMessage( messageType,
-						( proximityDevice, proximityMessage ) => messageReceivedCallback( proximityMessage.DataAsString ) );
-				ProximityMessagingStatus = ProximityMessagingStatus.Subscribed;
-			}
-		}
-
-		public void SubscribeForMessage<T>( string messageType, Action<T> messageReceivedCallback )
-		{
-			SubscribeForMessage( messageType, s => messageReceivedCallback( Deserialize<T>( s ) ) );
-		}
-
-		public void StopSubscribingForMessage()
-		{
-			//TODO: 1.1 - NfcWrapper.cs Implement StopSubscribingForMessage
-			/*
-			 * if _activeMessageId != -1 and ProximityMessagingStatus is Subscribed
-			 *	use _proximityDevice to StopSubscribingForMessage _activeMessageId
-			 *	set _activeMessageId to -1
-			 *	set ProximityMessagingStatus to Idle
-			 * 
-			 */
-
-			if ( _activeMessageId != -1 && ProximityMessagingStatus == ProximityMessagingStatus.Subscribed )
-			{
-				_proximityDevice.StopSubscribingForMessage( _activeMessageId );
-				_activeMessageId = -1;
-				ProximityMessagingStatus = ProximityMessagingStatus.Idle;
-			}
-		}
-
-		public void StartPublishing( string messageType, string message )
-		{
-			//TODO: 2.0 - NfcWrapper.cs Implement StartPublishing
-			/*
-			 * if _activeMessageId field == -1 (if a message is not currently being processed) and ProximityMessagingStatus is Idle
-			 *	use _proximityDevice to PublishMessage with available parameters 
-			 *		and store the returned messageId in the _activeMessageId field
-			 *	Set ProximityMessagingStatus to Publishing
-			 * 
-			 */
-
-			if ( _activeMessageId == -1 && ProximityMessagingStatus == ProximityMessagingStatus.Idle )
-			{
-				_activeMessageId = _proximityDevice.PublishMessage( messageType, message );
-				ProximityMessagingStatus = ProximityMessagingStatus.Publishing;
-			}
-		}
-
-		/// <summary>
-		/// SUGGESTION: The messageType parameter should include the type name you are sending to help ensure the data is recognized and processed correctly.
-		/// </summary>
-		public void StartPublishing( string messageType, object value )
-		{
-			StartPublishing( messageType, Serialize( value ) );
-		}
-
-		public void StopPublishing()
-		{
-			//TODO: 2.1 - NfcWrapper.cs Implement StopPublishing
-			/*
-			 * if _activeMessageId != -1 and ProximityMessagingStatus is Publishing
-			 *	call _proximityDevice.StopPublishing with the _activeMessageId
-			 *	set _activeMessageId to -1
-			 *	set ProximityMessagingStatus to Idle
-			 */
-
-			if ( _activeMessageId != -1 && ProximityMessagingStatus == ProximityMessagingStatus.Publishing )
-			{
-				_proximityDevice.StopPublishingMessage( _activeMessageId );
-				_activeMessageId = -1;
-				ProximityMessagingStatus = ProximityMessagingStatus.Idle;
-			}
-		}
-
-		private static string Serialize( object objectToSerialize )
-		{
-			using ( MemoryStream ms = new MemoryStream() )
-			{
-				DataContractSerializer serializer = new DataContractSerializer( objectToSerialize.GetType() );
-				serializer.WriteObject( ms, objectToSerialize );
-				ms.Position = 0;
-
-				using ( StreamReader reader = new StreamReader( ms ) )
-				{
-					return reader.ReadToEnd();
-				}
-			}
-		}
-
-		private static T Deserialize<T>( string jsonString )
-		{
-			using ( MemoryStream ms = new MemoryStream( Encoding.Unicode.GetBytes( jsonString ) ) )
-			{
-				DataContractSerializer serializer = new DataContractSerializer( typeof( T ) );
-				return (T) serializer.ReadObject( ms );
-			}
-		}
-
-		#endregion
-
-		#region PeerFinding
-
 		public PeerFindingState State
 		{
 			get { return _state; }
@@ -243,7 +91,6 @@ namespace ProximityDemo_Win8.FeatureWrappers
 		{
 			StateChanged( this, EventArgs.Empty );
 		}
-
 
 		public void AdvertiseForPeers( string displayName, bool isHost, Dictionary<string, string> alternateIdentities = null )
 		{
@@ -310,25 +157,25 @@ namespace ProximityDemo_Win8.FeatureWrappers
 			string message = "Connection requested by " + args.PeerInformation.DisplayName + ". Click 'OK' to connect.";
 			string title = "Peer Connection Request";
 			bool connectionAccepted = true;
-//#if NETFX_CORE
+			//#if NETFX_CORE
 
-//			var dialog = new MessageDialog( message, title );
+			//			var dialog = new MessageDialog( message, title );
 
-//			string okLabel = "OK";
-//			dialog.Commands.Add( new UICommand( okLabel ) );
-//			dialog.Commands.Add( new UICommand( "Cancel" ) );
-//			IUICommand command = await dialog.ShowAsync();
+			//			string okLabel = "OK";
+			//			dialog.Commands.Add( new UICommand( okLabel ) );
+			//			dialog.Commands.Add( new UICommand( "Cancel" ) );
+			//			IUICommand command = await dialog.ShowAsync();
 
-//			connectionAccepted = command.Label == okLabel;
-//#endif
+			//			connectionAccepted = command.Label == okLabel;
+			//#endif
 
-//#if WINDOWS_PHONE
-//			NotifyUser( "Connection requested by " + args.PeerInformation.DisplayName + " and will be automatically accepted for now on Windows Phone." );
-//			//TODO: MessageBox.Show must be called on the UI thread otherwise it will not display to the user, 
-//			//	but in order to do this we have to dispatch the call by using Deployment.Current.BeginInvoke and the problem with this is the need to get a response. 
-//			//	This code needs to be refactored for both WinRT and WP8 so both can be supported correctly and prompt for acceptance.
-//			connectionAccepted = true; //MessageBox.Show( message, title, MessageBoxButton.OKCancel ) == MessageBoxResult.OK;
-//#endif
+			//#if WINDOWS_PHONE
+			//			NotifyUser( "Connection requested by " + args.PeerInformation.DisplayName + " and will be automatically accepted for now on Windows Phone." );
+			//			//TODO: MessageBox.Show must be called on the UI thread otherwise it will not display to the user, 
+			//			//	but in order to do this we have to dispatch the call by using Deployment.Current.BeginInvoke and the problem with this is the need to get a response. 
+			//			//	This code needs to be refactored for both WinRT and WP8 so both can be supported correctly and prompt for acceptance.
+			//			connectionAccepted = true; //MessageBox.Show( message, title, MessageBoxButton.OKCancel ) == MessageBoxResult.OK;
+			//#endif
 
 			if ( connectionAccepted )
 			{
@@ -452,8 +299,6 @@ namespace ProximityDemo_Win8.FeatureWrappers
 			return PeerSocket;
 		}
 
-		#endregion
-
 		internal static async void NotifyUser( string message )
 		{
 #if NETFX_CORE
@@ -484,14 +329,146 @@ namespace ProximityDemo_Win8.FeatureWrappers
 #endif
 		}
 	}
+	#endregion
 
-	public enum ProximityMessagingStatus
+	#region NFC
+
+	public enum NfcMessagingStatus
 	{
 		NotSupported,
 		Idle,
 		Publishing,
 		Subscribed
 	}
+
+	public class NfcWrapper
+	{
+
+		#region Singleton
+		private static NfcWrapper _instance;
+		public static NfcWrapper Instance
+		{
+			get { return _instance ?? ( _instance = new NfcWrapper() ); }
+		}
+		private NfcWrapper()
+		{
+			//TODO: 0 - NfcWrapper.cs Implement Ctor and Initialize Proximity Device	
+			// For more information: http://msdn.microsoft.com/en-us/library/windowsphone/develop/jj207060(v=vs.105).aspx
+
+			/*
+			 * Update the WMAppManifest file
+			 *	Capabilities
+			 *		Enable ID_CAP_NETWORKING and ID_CAP_PROXIMITY
+			 * 
+			 * Get an instance of ProximityDevice via the Static Method GetDefault() 
+			 *	and store the value in a field
+			 * 
+			 * Set ProximityMessagingStatus
+			 *	If value == null 
+			 *		ProximityMessagingStatus.NotSupported
+			 *	else
+			 *		ProximityMessagingStatus.Idle
+			 * 
+			 */
+			
+			_proximityDevice = ProximityDevice.GetDefault();
+			MessagingStatus = _proximityDevice != null ? NfcMessagingStatus.Idle : NfcMessagingStatus.NotSupported;
+		}
+		#endregion
+
+		public static readonly string MESSAGE_TYPE_PREFIX = "Windows."; //NOTE: This is a mandatory messageType prefix
+
+		private readonly ProximityDevice _proximityDevice;
+		private long _activeMessageId = -1;
+
+		private NfcMessagingStatus _messagingStatus;
+		public NfcMessagingStatus MessagingStatus
+		{
+			get { return _messagingStatus; }
+			set
+			{
+				if ( value == _messagingStatus )
+					return;
+
+				_messagingStatus = value;
+			}
+		}
+
+
+		public void StartPublishing( string messageType, string message )
+		{
+			//TODO: NfcWrapper 1.0 - StartPublishing
+			/*
+			 * Pass the desired messageType and message to PublishMessage
+			 * Save the message Id returned
+			 * 
+			 * NOTE: All messageTypes must be prefixed with "Windows."
+			 */
+
+			if ( MessagingStatus == NfcMessagingStatus.Idle )
+			{
+				_activeMessageId = _proximityDevice.PublishMessage( MESSAGE_TYPE_PREFIX + messageType, message );
+				
+				MessagingStatus = NfcMessagingStatus.Publishing;
+			}
+		}
+
+		public void StopPublishing()
+		{
+			//TODO: NfcWrapper 2.0 - StopPublishing
+			/*
+			 * Pass the saved message Id to StopPublishingMessage
+			 * 
+			 */
+
+			if ( MessagingStatus == NfcMessagingStatus.Publishing )
+			{
+				_proximityDevice.StopPublishingMessage( _activeMessageId );
+				
+				_activeMessageId = -1;
+				MessagingStatus = NfcMessagingStatus.Idle;
+			}
+		}
+
+		public void SubscribeForMessage( string messageType, Action<string> messageReceivedCallback )
+		{
+			//TODO: NfcWrapper 3.0 - SubscribeForMessage
+			/*
+			 * SubscribeForMessage
+			 * Save the returned message Id
+			 */
+
+			if ( MessagingStatus == NfcMessagingStatus.Idle )
+			{
+				_activeMessageId =
+					_proximityDevice.SubscribeForMessage( MESSAGE_TYPE_PREFIX + messageType,
+						( proximityDevice, proximityMessage ) => messageReceivedCallback( proximityMessage.DataAsString ) );
+				
+				MessagingStatus = NfcMessagingStatus.Subscribed;
+			}
+		}
+
+		public void StopSubscribingForMessage()
+		{
+			//TODO: NfcWrapper 4.0 - StopSubscribingForMessage
+			/*
+			 * Pass the saved message Id from SubscribeForMessage into StopSubscribingForMessage
+			 * 
+			 */
+
+			if ( MessagingStatus == NfcMessagingStatus.Subscribed )
+			{
+				_proximityDevice.StopSubscribingForMessage( _activeMessageId );
+				
+				_activeMessageId = -1;
+				MessagingStatus = NfcMessagingStatus.Idle;
+			}
+		}
+	}
+
+	#endregion
+
+	#region Helpers
 
 	public class StreamSocketManager : IDisposable
 	{
@@ -518,8 +495,8 @@ namespace ProximityDemo_Win8.FeatureWrappers
 			await receiveMessageTask.WaitOrCancel( receiveMessageCancellationTokenSource.Token );
 			if ( receiveMessageTask.IsFaulted )
 			{
-				NfcWrapper.NotifyUser( "PeerSocket Connection Failed" );
-				NfcWrapper.Instance.DisconnectAndClosePeerConnections();
+				PeerFinderWrapper.NotifyUser( "PeerSocket Connection Failed" );
+				PeerFinderWrapper.Instance.DisconnectAndClosePeerConnections();
 				return null;
 			}
 			return receiveMessageTask.Result;
@@ -703,4 +680,5 @@ namespace ProximityDemo_Win8.FeatureWrappers
 		}
 	}
 
+	#endregion
 }

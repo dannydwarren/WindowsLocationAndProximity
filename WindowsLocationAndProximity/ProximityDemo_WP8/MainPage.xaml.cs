@@ -1,60 +1,56 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Navigation;
-using Windows.ApplicationModel.Core;
 using Windows.Networking.Proximity;
-using Windows.UI.Core;
 using LocationDemo_Win8.FeatureWrappers;
 using Microsoft.Phone.Controls;
-using Microsoft.Phone.Shell;
 using ProximityDemo_Win8.FeatureWrappers;
-using ProximityDemo_WP8.Resources;
 
 namespace ProximityDemo_WP8
 {
 	public partial class MainPage : PhoneApplicationPage
 	{
-		// Constructor
 		public MainPage()
 		{
 			InitializeComponent();
-
-			// Sample code to localize the ApplicationBar
-			//BuildLocalizedApplicationBar();
 		}
 
+		#region Nfc
 
-		#region Proximity
-
-		private static readonly string MESSAGE_TYPE = NfcWrapper.MESSAGE_TYPE_PREFIX + "LocationPoC.Message";
+		private static readonly string MESSAGE_TYPE = "LocationPoC.Message";
 		private void PublishMessage_Click( object sender, RoutedEventArgs e )
 		{
 			NfcWrapper.Instance.StartPublishing( MESSAGE_TYPE, MessageToSend.Text );
+			MessageReceived.Text = NfcWrapper.Instance.MessagingStatus.ToString();
 		}
 
 		private void StopPublishingMessage_Click( object sender, RoutedEventArgs e )
 		{
 			NfcWrapper.Instance.StopPublishing();
+			MessageReceived.Text = NfcWrapper.Instance.MessagingStatus.ToString();
 		}
 
 		private void SubscribeMessage_Click( object sender, RoutedEventArgs e )
 		{
 			NfcWrapper.Instance.SubscribeForMessage( MESSAGE_TYPE, MessageReceivedHandler );
-			MessageReceived.Text = "Waiting...";
+			MessageReceived.Text = NfcWrapper.Instance.MessagingStatus.ToString();
 		}
 
 		private void MessageReceivedHandler( string value )
 		{
+			//TODO: NfcWrapper 5.0 - MessageReceivedHandler
+			/*
+			 * MessageCallback returns on a background thread so developers must dispatch any UI interaction to the UI thread via the dispatcher
+			 * 
+			 */
 			Deployment.Current.Dispatcher.BeginInvoke( () => MessageReceived.Text = value );
 		}
 
 		private void StopSubscribingMessage_Click( object sender, RoutedEventArgs e )
 		{
 			NfcWrapper.Instance.StopSubscribingForMessage();
+			MessageReceived.Text = NfcWrapper.Instance.MessagingStatus.ToString();
 		}
 
 		#endregion
@@ -63,9 +59,9 @@ namespace ProximityDemo_WP8
 
 		private void SendSocketMessage_Click( object sender, RoutedEventArgs e )
 		{
-			if ( NfcWrapper.Instance.PeerSocket != null )
+			if ( PeerFinderWrapper.Instance.PeerSocket != null )
 			{
-				NfcWrapper.Instance.PeerSocket.SendMessage( SocketMessageToSend.Text );
+				PeerFinderWrapper.Instance.PeerSocket.SendMessage( SocketMessageToSend.Text );
 			}
 		}
 
@@ -83,11 +79,11 @@ namespace ProximityDemo_WP8
 	    };
 		private void AdvertiseForPeers_Click( object sender, RoutedEventArgs e )
 		{
-			if ( NfcWrapper.Instance.State == PeerFindingState.Inactive )
+			if ( PeerFinderWrapper.Instance.State == PeerFindingState.Inactive )
 			{
-				NfcWrapper.Instance.StateChanged += NfcStateChanged;
-				NfcWrapper.Instance.PeersFound += NfcPeersFound;
-				NfcWrapper.Instance.AdvertiseForPeers( "WinPhone_Old (HOST)", true, _alternateIdentities );
+				PeerFinderWrapper.Instance.StateChanged += NfcStateChanged;
+				PeerFinderWrapper.Instance.PeersFound += NfcPeersFound;
+				PeerFinderWrapper.Instance.AdvertiseForPeers( "WinPhone_Old (HOST)", true, _alternateIdentities );
 			}
 		}
 
@@ -113,42 +109,42 @@ namespace ProximityDemo_WP8
 
 		private void ListenForPeers_Click( object sender, RoutedEventArgs e )
 		{
-			if ( NfcWrapper.Instance.State == PeerFindingState.Inactive )
+			if ( PeerFinderWrapper.Instance.State == PeerFindingState.Inactive )
 			{
-				NfcWrapper.Instance.StateChanged += NfcStateChanged;
-				NfcWrapper.Instance.AdvertiseForPeers( "WinPhone_Old (PEER)", false, _alternateIdentities );
+				PeerFinderWrapper.Instance.StateChanged += NfcStateChanged;
+				PeerFinderWrapper.Instance.AdvertiseForPeers( "WinPhone_Old (PEER)", false, _alternateIdentities );
 			}
 		}
 
 		private void Disconnect_Click( object sender, RoutedEventArgs e )
 		{
-			NfcWrapper.Instance.DisconnectAndClosePeerConnections();
+			PeerFinderWrapper.Instance.DisconnectAndClosePeerConnections();
 		}
 
 		private void ConnectToPeer_Click( object sender, RoutedEventArgs e )
 		{
-			NfcWrapper.Instance.ConnectToPeer( (PeerInformation) Peers.SelectedItem );
+			PeerFinderWrapper.Instance.ConnectToPeer( (PeerInformation) Peers.SelectedItem );
 		}
 
 		private void NfcStateChanged( object sender, EventArgs e )
 		{
-			if ( NfcWrapper.Instance.State == PeerFindingState.Connected )
+			if ( PeerFinderWrapper.Instance.State == PeerFindingState.Connected )
 			{
 				WaitForMessages();
 			}
 
 			Deployment.Current.Dispatcher.BeginInvoke( () =>
 			{
-				StateTextBlock.Text = NfcWrapper.Instance.State.ToString();
+				StateTextBlock.Text = PeerFinderWrapper.Instance.State.ToString();
 			} );
 		}
 
 		private async void WaitForMessages()
 		{
-			while ( NfcWrapper.Instance.State == PeerFindingState.Connected
-				&& NfcWrapper.Instance.PeerSocket != null )
+			while ( PeerFinderWrapper.Instance.State == PeerFindingState.Connected
+				&& PeerFinderWrapper.Instance.PeerSocket != null )
 			{
-				string message = await NfcWrapper.Instance.PeerSocket.ReceiveMessage();
+				string message = await PeerFinderWrapper.Instance.PeerSocket.ReceiveMessage();
 				Deployment.Current.Dispatcher.BeginInvoke( () =>
 				{
 					SocketMessageReceived.Text = string.IsNullOrEmpty( message ) ? string.Empty : message;
