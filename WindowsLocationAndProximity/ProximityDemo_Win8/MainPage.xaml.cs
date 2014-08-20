@@ -22,28 +22,35 @@ namespace ProximityDemo_Win8
         {
             this.InitializeComponent();
         }
-
-		#region Proximity
+	
+		#region Nfc
 
 		private static readonly string MESSAGE_TYPE = "LocationPoC.Message";
 		private void PublishMessage_Click( object sender, RoutedEventArgs e )
 		{
 			NfcWrapper.Instance.StartPublishing( MESSAGE_TYPE, MessageToSend.Text );
+			MessageReceived.Text = NfcWrapper.Instance.MessagingStatus.ToString();
 		}
 
 		private void StopPublishingMessage_Click( object sender, RoutedEventArgs e )
 		{
 			NfcWrapper.Instance.StopPublishing();
+			MessageReceived.Text = NfcWrapper.Instance.MessagingStatus.ToString();
 		}
 
 		private void SubscribeMessage_Click( object sender, RoutedEventArgs e )
 		{
 			NfcWrapper.Instance.SubscribeForMessage( MESSAGE_TYPE, MessageReceivedHandler );
-			MessageReceived.Text = "Waiting...";
+			MessageReceived.Text = NfcWrapper.Instance.MessagingStatus.ToString();
 		}
 
 		private void MessageReceivedHandler( string value )
 		{
+			//TODO: NfcWrapper 5.0 - MessageReceivedHandler
+			/*
+			 * MessageCallback returns on a background thread so developers must dispatch any UI interaction to the UI thread via the dispatcher
+			 * 
+			 */
 			CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(
 				CoreDispatcherPriority.Normal, () => MessageReceived.Text = value );
 		}
@@ -51,6 +58,7 @@ namespace ProximityDemo_Win8
 		private void StopSubscribingMessage_Click( object sender, RoutedEventArgs e )
 		{
 			NfcWrapper.Instance.StopSubscribingForMessage();
+			MessageReceived.Text = NfcWrapper.Instance.MessagingStatus.ToString();
 		}
 
 		#endregion
