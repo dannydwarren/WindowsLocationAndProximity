@@ -22,6 +22,143 @@ using UnicodeEncoding = Windows.Storage.Streams.UnicodeEncoding;
 
 namespace ProximityDemo_Win8.FeatureWrappers
 {
+	#region NFC
+
+	public enum NfcMessagingStatus
+	{
+		NotSupported,
+		Idle,
+		Publishing,
+		Subscribed
+	}
+
+	public class NfcWrapper
+	{
+
+		#region Singleton
+		private static NfcWrapper _instance;
+		public static NfcWrapper Instance
+		{
+			get { return _instance ?? ( _instance = new NfcWrapper() ); }
+		}
+		private NfcWrapper()
+		{
+			//TODO: 0 - NfcWrapper.cs Implement Ctor and Initialize Proximity Device	
+			// For more information: http://msdn.microsoft.com/en-us/library/windowsphone/develop/jj207060(v=vs.105).aspx
+
+			/*
+			 * Update the WMAppManifest file
+			 *	Capabilities
+			 *		Enable ID_CAP_NETWORKING and ID_CAP_PROXIMITY
+			 * 
+			 * Get an instance of ProximityDevice via the Static Method GetDefault() 
+			 *	and store the value in a field
+			 * 
+			 * Set ProximityMessagingStatus
+			 *	If value == null 
+			 *		ProximityMessagingStatus.NotSupported
+			 *	else
+			 *		ProximityMessagingStatus.Idle
+			 * 
+			 */
+			
+			_proximityDevice = ProximityDevice.GetDefault();
+			MessagingStatus = _proximityDevice != null ? NfcMessagingStatus.Idle : NfcMessagingStatus.NotSupported;
+		}
+		#endregion
+
+		public static readonly string MESSAGE_TYPE_PREFIX = "Windows."; //NOTE: This is a mandatory messageType prefix
+
+		private readonly ProximityDevice _proximityDevice;
+		private long _activeMessageId = -1;
+
+		private NfcMessagingStatus _messagingStatus;
+		public NfcMessagingStatus MessagingStatus
+		{
+			get { return _messagingStatus; }
+			set
+			{
+				if ( value == _messagingStatus )
+					return;
+
+				_messagingStatus = value;
+			}
+		}
+
+
+		public void StartPublishing( string messageType, string message )
+		{
+			//TODO: NfcWrapper 1.0 - StartPublishing
+			/*
+			 * Pass the desired messageType and message to PublishMessage
+			 * Save the message Id returned
+			 * 
+			 * NOTE: All messageTypes must be prefixed with "Windows."
+			 */
+
+			if ( MessagingStatus == NfcMessagingStatus.Idle )
+			{
+				_activeMessageId = _proximityDevice.PublishMessage( MESSAGE_TYPE_PREFIX + messageType, message );
+				
+				MessagingStatus = NfcMessagingStatus.Publishing;
+			}
+		}
+
+		public void StopPublishing()
+		{
+			//TODO: NfcWrapper 2.0 - StopPublishing
+			/*
+			 * Pass the saved message Id to StopPublishingMessage
+			 * 
+			 */
+
+			if ( MessagingStatus == NfcMessagingStatus.Publishing )
+			{
+				_proximityDevice.StopPublishingMessage( _activeMessageId );
+				
+				_activeMessageId = -1;
+				MessagingStatus = NfcMessagingStatus.Idle;
+			}
+		}
+
+		public void SubscribeForMessage( string messageType, Action<string> messageReceivedCallback )
+		{
+			//TODO: NfcWrapper 3.0 - SubscribeForMessage
+			/*
+			 * SubscribeForMessage
+			 * Save the returned message Id
+			 */
+
+			if ( MessagingStatus == NfcMessagingStatus.Idle )
+			{
+				_activeMessageId =
+					_proximityDevice.SubscribeForMessage( MESSAGE_TYPE_PREFIX + messageType,
+						( proximityDevice, proximityMessage ) => messageReceivedCallback( proximityMessage.DataAsString ) );
+				
+				MessagingStatus = NfcMessagingStatus.Subscribed;
+			}
+		}
+
+		public void StopSubscribingForMessage()
+		{
+			//TODO: NfcWrapper 4.0 - StopSubscribingForMessage
+			/*
+			 * Pass the saved message Id from SubscribeForMessage into StopSubscribingForMessage
+			 * 
+			 */
+
+			if ( MessagingStatus == NfcMessagingStatus.Subscribed )
+			{
+				_proximityDevice.StopSubscribingForMessage( _activeMessageId );
+				
+				_activeMessageId = -1;
+				MessagingStatus = NfcMessagingStatus.Idle;
+			}
+		}
+	}
+
+	#endregion
+
 	#region PeerFinding
 
 	public enum PeerFindingState
@@ -329,143 +466,6 @@ namespace ProximityDemo_Win8.FeatureWrappers
 #endif
 		}
 	}
-	#endregion
-
-	#region NFC
-
-	public enum NfcMessagingStatus
-	{
-		NotSupported,
-		Idle,
-		Publishing,
-		Subscribed
-	}
-
-	public class NfcWrapper
-	{
-
-		#region Singleton
-		private static NfcWrapper _instance;
-		public static NfcWrapper Instance
-		{
-			get { return _instance ?? ( _instance = new NfcWrapper() ); }
-		}
-		private NfcWrapper()
-		{
-			//TODO: 0 - NfcWrapper.cs Implement Ctor and Initialize Proximity Device	
-			// For more information: http://msdn.microsoft.com/en-us/library/windowsphone/develop/jj207060(v=vs.105).aspx
-
-			/*
-			 * Update the WMAppManifest file
-			 *	Capabilities
-			 *		Enable ID_CAP_NETWORKING and ID_CAP_PROXIMITY
-			 * 
-			 * Get an instance of ProximityDevice via the Static Method GetDefault() 
-			 *	and store the value in a field
-			 * 
-			 * Set ProximityMessagingStatus
-			 *	If value == null 
-			 *		ProximityMessagingStatus.NotSupported
-			 *	else
-			 *		ProximityMessagingStatus.Idle
-			 * 
-			 */
-			
-			_proximityDevice = ProximityDevice.GetDefault();
-			MessagingStatus = _proximityDevice != null ? NfcMessagingStatus.Idle : NfcMessagingStatus.NotSupported;
-		}
-		#endregion
-
-		public static readonly string MESSAGE_TYPE_PREFIX = "Windows."; //NOTE: This is a mandatory messageType prefix
-
-		private readonly ProximityDevice _proximityDevice;
-		private long _activeMessageId = -1;
-
-		private NfcMessagingStatus _messagingStatus;
-		public NfcMessagingStatus MessagingStatus
-		{
-			get { return _messagingStatus; }
-			set
-			{
-				if ( value == _messagingStatus )
-					return;
-
-				_messagingStatus = value;
-			}
-		}
-
-
-		public void StartPublishing( string messageType, string message )
-		{
-			//TODO: NfcWrapper 1.0 - StartPublishing
-			/*
-			 * Pass the desired messageType and message to PublishMessage
-			 * Save the message Id returned
-			 * 
-			 * NOTE: All messageTypes must be prefixed with "Windows."
-			 */
-
-			if ( MessagingStatus == NfcMessagingStatus.Idle )
-			{
-				_activeMessageId = _proximityDevice.PublishMessage( MESSAGE_TYPE_PREFIX + messageType, message );
-				
-				MessagingStatus = NfcMessagingStatus.Publishing;
-			}
-		}
-
-		public void StopPublishing()
-		{
-			//TODO: NfcWrapper 2.0 - StopPublishing
-			/*
-			 * Pass the saved message Id to StopPublishingMessage
-			 * 
-			 */
-
-			if ( MessagingStatus == NfcMessagingStatus.Publishing )
-			{
-				_proximityDevice.StopPublishingMessage( _activeMessageId );
-				
-				_activeMessageId = -1;
-				MessagingStatus = NfcMessagingStatus.Idle;
-			}
-		}
-
-		public void SubscribeForMessage( string messageType, Action<string> messageReceivedCallback )
-		{
-			//TODO: NfcWrapper 3.0 - SubscribeForMessage
-			/*
-			 * SubscribeForMessage
-			 * Save the returned message Id
-			 */
-
-			if ( MessagingStatus == NfcMessagingStatus.Idle )
-			{
-				_activeMessageId =
-					_proximityDevice.SubscribeForMessage( MESSAGE_TYPE_PREFIX + messageType,
-						( proximityDevice, proximityMessage ) => messageReceivedCallback( proximityMessage.DataAsString ) );
-				
-				MessagingStatus = NfcMessagingStatus.Subscribed;
-			}
-		}
-
-		public void StopSubscribingForMessage()
-		{
-			//TODO: NfcWrapper 4.0 - StopSubscribingForMessage
-			/*
-			 * Pass the saved message Id from SubscribeForMessage into StopSubscribingForMessage
-			 * 
-			 */
-
-			if ( MessagingStatus == NfcMessagingStatus.Subscribed )
-			{
-				_proximityDevice.StopSubscribingForMessage( _activeMessageId );
-				
-				_activeMessageId = -1;
-				MessagingStatus = NfcMessagingStatus.Idle;
-			}
-		}
-	}
-
 	#endregion
 
 	#region Helpers
