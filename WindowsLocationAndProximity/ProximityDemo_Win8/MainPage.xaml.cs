@@ -11,13 +11,13 @@ using ProximityDemo_Win8.FeatureWrappers;
 
 namespace ProximityDemo_Win8
 {
-    public sealed partial class MainPage : Page
-    {
-        public MainPage()
-        {
-            this.InitializeComponent();
-        }
-	
+	public sealed partial class MainPage : Page
+	{
+		public MainPage()
+		{
+			this.InitializeComponent();
+		}
+
 		#region Nfc
 
 		private static readonly string MESSAGE_TYPE = "LocationPoC.Message";
@@ -60,15 +60,7 @@ namespace ProximityDemo_Win8
 
 		#region PeerFinding
 
-		private void SendSocketMessage_Click( object sender, RoutedEventArgs e )
-		{
-			if ( PeerFinderWrapper.Instance.PeerSocket != null )
-			{
-				PeerFinderWrapper.Instance.PeerSocket.SendMessage( SocketMessageToSend.Text );
-			}
-		}
-
-		private Dictionary<string, string> _alternateIdentities = new Dictionary<string, string>
+		private readonly Dictionary<string, string> _alternateIdentities = new Dictionary<string, string>
 		{
 			{
 			    "Win_New", "0bb8f684-755d-4948-b4db-37352cb1f70e_4c5b9g29w27se!ProximityDemo_Universal.Windows"
@@ -81,17 +73,30 @@ namespace ProximityDemo_Win8
 			}
 		};
 
+		private void PeerFindingStateChanged( object sender, EventArgs e )
+		{
+			if ( PeerFinderWrapper.Instance.State == PeerFindingState.Connected )
+			{
+				WaitForMessages();
+			}
+
+			CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync( CoreDispatcherPriority.Normal, () =>
+			{
+				StateTextBlock.Text = PeerFinderWrapper.Instance.State.ToString();
+			} );
+		}
+
 		private void AdvertiseForPeers_Click( object sender, RoutedEventArgs e )
 		{
 			if ( PeerFinderWrapper.Instance.State == PeerFindingState.Inactive )
 			{
-				PeerFinderWrapper.Instance.StateChanged += NfcStateChanged;
-				PeerFinderWrapper.Instance.PeersFound += NfcPeersFound;
+				PeerFinderWrapper.Instance.StateChanged += PeerFindingStateChanged;
+				PeerFinderWrapper.Instance.PeersFound += PeersFound;
 				PeerFinderWrapper.Instance.AdvertiseForPeers( "WinRT (HOST)", true, _alternateIdentities );
 			}
 		}
-
-		private void NfcPeersFound( object sender, EventArgs<IReadOnlyList<PeerInformation>> e )
+		
+		private void PeersFound( object sender, EventArgs<IReadOnlyList<PeerInformation>> e )
 		{
 			if ( e.Payload != null )
 			{
@@ -116,45 +121,56 @@ namespace ProximityDemo_Win8
 		{
 			if ( PeerFinderWrapper.Instance.State == PeerFindingState.Inactive )
 			{
-				PeerFinderWrapper.Instance.StateChanged += NfcStateChanged;
+				PeerFinderWrapper.Instance.StateChanged += PeerFindingStateChanged;
 				PeerFinderWrapper.Instance.AdvertiseForPeers( "WinRT (PEER)", false, _alternateIdentities );
 			}
 		}
 
-		private void Disconnect_Click( object sender, RoutedEventArgs e )
+		private async void ConnectToPeer_Click( object sender, RoutedEventArgs e )
 		{
-			PeerFinderWrapper.Instance.DisconnectAndClosePeerConnections();
+			await PeerFinderWrapper.Instance.ConnectToPeer( (PeerInformation) Peers.SelectedItem );
 		}
 
-		private void ConnectToPeer_Click( object sender, RoutedEventArgs e )
+		private void SendSocketMessage_Click( object sender, RoutedEventArgs e )
 		{
-			PeerFinderWrapper.Instance.ConnectToPeer( (PeerInformation) Peers.SelectedItem );
-		}
+			//TODO: PeerFinderWrapper 6.0 - SendSocketMessage_Click
+			/*
+			 * Use the StreamSocketManager to send a message to the connected Peer
+			 * 
+			 */
 
-		private void NfcStateChanged( object sender, EventArgs e )
-		{
-			if ( PeerFinderWrapper.Instance.State == PeerFindingState.Connected )
+			if ( PeerFinderWrapper.Instance.PeerSocket != null )
 			{
-				WaitForMessages();
+				PeerFinderWrapper.Instance.PeerSocket.SendMessage( SocketMessageToSend.Text );
 			}
-
-			CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync( CoreDispatcherPriority.Normal, () =>
-			{
-				StateTextBlock.Text = PeerFinderWrapper.Instance.State.ToString();
-			} );
 		}
 
 		private async void WaitForMessages()
 		{
+			//TODO: PeerFinderWrapper 7.0 - WaitForMessages
+			/*
+			 * Use the StreamSocketManager to asynchronously wait for messages sent from the connected Peer
+			 * Dispatch received messages to the UI thread
+			 * 
+			 */
+
 			while ( PeerFinderWrapper.Instance.State == PeerFindingState.Connected
 				&& PeerFinderWrapper.Instance.PeerSocket != null )
 			{
 				string message = await PeerFinderWrapper.Instance.PeerSocket.ReceiveMessage();
 				CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync( CoreDispatcherPriority.Normal, () =>
 				{
-					SocketMessageReceived.Text = string.IsNullOrEmpty( message ) ? string.Empty : message;
+					SocketMessageReceived.Text = string.IsNullOrEmpty( message ) ? "Empty message received." : message;
 				} );
 			}
+		}
+
+		private void Disconnect_Click( object sender, RoutedEventArgs e )
+		{
+			PeerFinderWrapper.Instance.StateChanged -= PeerFindingStateChanged;
+			PeerFinderWrapper.Instance.PeersFound -= PeersFound;
+
+			PeerFinderWrapper.Instance.DisconnectAndClosePeerConnections();
 		}
 
 

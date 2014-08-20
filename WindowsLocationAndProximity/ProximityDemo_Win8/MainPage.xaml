@@ -24,7 +24,7 @@
 					Click="StopPublishingMessage_Click" />
 			<Button Content="Receive Message"
 					Click="SubscribeMessage_Click" />
-			<Button Content="Stop Recieving Message"
+			<Button Content="Stop Receiving Message"
 					Click="StopSubscribingMessage_Click" />
 			<!--***************************************-->
 			<TextBlock Text="Peer Demo" />

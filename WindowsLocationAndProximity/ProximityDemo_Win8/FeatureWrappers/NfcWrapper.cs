@@ -61,7 +61,7 @@ namespace ProximityDemo_Win8.FeatureWrappers
 			 *		ProximityMessagingStatus.Idle
 			 * 
 			 */
-			
+
 			_proximityDevice = ProximityDevice.GetDefault();
 			MessagingStatus = _proximityDevice != null ? NfcMessagingStatus.Idle : NfcMessagingStatus.NotSupported;
 		}
@@ -99,7 +99,7 @@ namespace ProximityDemo_Win8.FeatureWrappers
 			if ( MessagingStatus == NfcMessagingStatus.Idle )
 			{
 				_activeMessageId = _proximityDevice.PublishMessage( MESSAGE_TYPE_PREFIX + messageType, message );
-				
+
 				MessagingStatus = NfcMessagingStatus.Publishing;
 			}
 		}
@@ -115,7 +115,7 @@ namespace ProximityDemo_Win8.FeatureWrappers
 			if ( MessagingStatus == NfcMessagingStatus.Publishing )
 			{
 				_proximityDevice.StopPublishingMessage( _activeMessageId );
-				
+
 				_activeMessageId = -1;
 				MessagingStatus = NfcMessagingStatus.Idle;
 			}
@@ -134,7 +134,7 @@ namespace ProximityDemo_Win8.FeatureWrappers
 				_activeMessageId =
 					_proximityDevice.SubscribeForMessage( MESSAGE_TYPE_PREFIX + messageType,
 						( proximityDevice, proximityMessage ) => messageReceivedCallback( proximityMessage.DataAsString ) );
-				
+
 				MessagingStatus = NfcMessagingStatus.Subscribed;
 			}
 		}
@@ -150,7 +150,7 @@ namespace ProximityDemo_Win8.FeatureWrappers
 			if ( MessagingStatus == NfcMessagingStatus.Subscribed )
 			{
 				_proximityDevice.StopSubscribingForMessage( _activeMessageId );
-				
+
 				_activeMessageId = -1;
 				MessagingStatus = NfcMessagingStatus.Idle;
 			}
@@ -172,38 +172,22 @@ namespace ProximityDemo_Win8.FeatureWrappers
 
 	public class PeerFinderWrapper
 	{
-		private PeerFinderWrapper()
-		{
-			//TODO: 0 - NfcWrapper.cs Implement Ctor and Initialize Proximity Device	
-			// For more information: http://msdn.microsoft.com/en-us/library/windowsphone/develop/jj207060(v=vs.105).aspx
-
-			/*
-			 * Update the WMAppManifest file
-			 *	Capabilities
-			 *		Enable ID_CAP_NETWORKING and ID_CAP_PROXIMITY
-			 * 
-			 * Get an instance of ProximityDevice via the Static Method GetDefault() 
-			 *	and store the value in a field
-			 * 
-			 * Set ProximityMessagingStatus
-			 *	If value == null 
-			 *		ProximityMessagingStatus.NotSupported
-			 *	else
-			 *		ProximityMessagingStatus.Idle
-			 * 
-			 */
-		}
-
+		#region Singleton
 		private static PeerFinderWrapper _instance;
 		public static PeerFinderWrapper Instance
 		{
-			get
-			{
-				if ( _instance == null )
-					_instance = new PeerFinderWrapper();
-				return _instance;
-			}
+			get { return _instance ?? ( _instance = new PeerFinderWrapper() ); }
 		}
+		private PeerFinderWrapper()
+		{
+
+		}
+		#endregion
+
+
+		private StreamSocket _socket;
+
+		public StreamSocketManager PeerSocket { get; private set; }
 
 		private PeerFindingState _state;
 		public PeerFindingState State
@@ -220,26 +204,47 @@ namespace ProximityDemo_Win8.FeatureWrappers
 			}
 		}
 
-		public StreamSocketManager PeerSocket { get; private set; }
-		private StreamSocket _socket;
-
 		public event EventHandler StateChanged = delegate { };
 		private void OnStateChanged()
 		{
 			StateChanged( this, EventArgs.Empty );
 		}
 
+		public event EventHandler<EventArgs<IReadOnlyList<PeerInformation>>> PeersFound = delegate { };
+		private void OnPeersFound( IReadOnlyList<PeerInformation> foundPeers )
+		{
+			PeersFound( this, new EventArgs<IReadOnlyList<PeerInformation>>( foundPeers ) );
+		}
+
 		public void AdvertiseForPeers( string displayName, bool isHost, Dictionary<string, string> alternateIdentities = null )
 		{
+			//TODO: PeerFinderWrapper 1.0 - AdvertiseForPeers
+			/*
+			 * Specifiy DisplayName
+			 * Subscribe to the desired events
+			 *		TriggeredConnectionStateChanged - For Tap to Find Peer
+			 *		ConnectionRequested - For client to be notified when the host has submitted a connection request
+			 * AlternateIdenties - allow multiple apps to work together like a Windows App and a Windows Phone App
+			 * 
+			 * PeerFinder.Start() - starts the device PeerFinder service
+			 *		Windows - Searches via WiFi Direct ONLY
+			 *		Windows Phone - Searches via BlueTooth ONLY
+			 *		NOTE: This means that Windows Apps and Windows Phone Apps can find eachother ONLY via NFC Tap to Find Peer
+			 * 
+			 */
+
 			if ( State != PeerFindingState.Inactive )
 			{
 				return;
 			}
 
 			PeerFinder.DisplayName = displayName; //could be stored LocalStorage
-			if ( !isHost )
-				PeerFinder.ConnectionRequested += ConnectionRequested;
 			PeerFinder.TriggeredConnectionStateChanged += TriggeredConnectionStateChanged;
+
+			if ( !isHost )
+			{
+				PeerFinder.ConnectionRequested += ConnectionRequested;
+			}
 
 			if ( alternateIdentities != null )
 			{
@@ -270,58 +275,106 @@ namespace ProximityDemo_Win8.FeatureWrappers
 			}
 		}
 
-		public void DisconnectAndClosePeerConnections()
+		private int _findPeerFailures;
+		private async void SearchForPeers()
 		{
-			if ( State != PeerFindingState.Inactive )
-			{
-				PeerFinder.Stop();
-				PeerFinder.ConnectionRequested -= ConnectionRequested;
-				PeerFinder.TriggeredConnectionStateChanged -= TriggeredConnectionStateChanged;
+			//TODO: PeerFinderWrapper 2.0 - SearchForPeers
+			/*
+			 * Asynchronously search for peers via PeerFinder.FindAllPeersAsync
+			 * 
+			 */
 
-				if ( PeerSocket != null )
+			State = PeerFindingState.Searching;
+			while ( State == PeerFindingState.Searching )
+			{
+				IReadOnlyList<PeerInformation> peerInfoCollection = null;
+				string errorMessage = null;
+				try
 				{
-					PeerSocket.Dispose();
-					PeerSocket = null;
-					_socket = null;
+					peerInfoCollection = await PeerFinder.FindAllPeersAsync();
+				}
+				catch ( Exception e )
+				{
+					_findPeerFailures++;
+					errorMessage = "Error finding peers. Disconnecting. Details: " + e.Message;
 				}
 
-				State = PeerFindingState.Inactive;
+				if ( errorMessage != null && _findPeerFailures > 3 )
+				{
+					NotifyUser( errorMessage );
+					DisconnectAndClosePeerConnections();
+					break;
+				}
+
+				if ( peerInfoCollection != null )
+				{
+					OnPeersFound( peerInfoCollection );
+				}
+			}
+		}
+
+		public async Task ConnectToPeer( PeerInformation peerInformation )
+		{
+			//TODO: PeerFinderWrapper 3.0 - ConnectToPeer
+			/*
+			 * Use peerInformation to obtain a socket connection to that peer via PeerFinder.ConnectAsync
+			 * Create StreamSocketManager with the obtained socket connection for sending and receiving messages
+			 * 
+			 */
+
+			switch ( State )
+			{
+				case PeerFindingState.Inactive:
+					NotifyUser( "You must first advertise for peers before trying to connect to one." );
+					return;
+				case PeerFindingState.Connected:
+					NotifyUser( "You are already connected to a peer" );
+					return;
+				default:
+					State = PeerFindingState.Connecting;
+					break;
+			}
+
+			string errorMessage = null;
+			try
+			{
+				_socket = await PeerFinder.ConnectAsync( peerInformation );
+				NotifyUser( "Connected to socket." );
+				PeerSocket = new StreamSocketManager( _socket );
+				NotifyUser( "Connected with manager. You may now send a message." );
+				State = PeerFindingState.Connected;
+			}
+			catch ( Exception e )
+			{
+				errorMessage = "Connection Failed: " + e.Message;
+			}
+
+			if ( errorMessage != null )
+			{
+				NotifyUser( errorMessage );
 			}
 		}
 
 		private async void ConnectionRequested( object sender, ConnectionRequestedEventArgs args )
 		{
-			string message = "Connection requested by " + args.PeerInformation.DisplayName + ". Click 'OK' to connect.";
-			string title = "Peer Connection Request";
-			bool connectionAccepted = true;
-			//#if NETFX_CORE
+			//TODO: PeerFinderWrapper 4.0 - ConnectionRequested
+			/*
+			 * Client is informed a host is requesting connection, open a socket to the host
+			 * 
+			 */
 
-			//			var dialog = new MessageDialog( message, title );
-
-			//			string okLabel = "OK";
-			//			dialog.Commands.Add( new UICommand( okLabel ) );
-			//			dialog.Commands.Add( new UICommand( "Cancel" ) );
-			//			IUICommand command = await dialog.ShowAsync();
-
-			//			connectionAccepted = command.Label == okLabel;
-			//#endif
-
-			//#if WINDOWS_PHONE
-			//			NotifyUser( "Connection requested by " + args.PeerInformation.DisplayName + " and will be automatically accepted for now on Windows Phone." );
-			//			//TODO: MessageBox.Show must be called on the UI thread otherwise it will not display to the user, 
-			//			//	but in order to do this we have to dispatch the call by using Deployment.Current.BeginInvoke and the problem with this is the need to get a response. 
-			//			//	This code needs to be refactored for both WinRT and WP8 so both can be supported correctly and prompt for acceptance.
-			//			connectionAccepted = true; //MessageBox.Show( message, title, MessageBoxButton.OKCancel ) == MessageBoxResult.OK;
-			//#endif
-
-			if ( connectionAccepted )
-			{
-				await ConnectToPeer( args.PeerInformation );
-			}
+			await ConnectToPeer( args.PeerInformation );
 		}
 
 		private void TriggeredConnectionStateChanged( object sender, TriggeredConnectionStateChangedEventArgs args )
 		{
+			//TODO: PeerFinderWrapper 5.0 - TriggeredConnectionStateChanged
+			/*
+			 * Tap to Find Peer provides a socket ready for use
+			 * Create StreamSocketManager with the obtained socket connection for sending and receiving messages
+			 * 
+			 */
+
 			switch ( args.State )
 			{
 				case TriggeredConnectState.PeerFound:
@@ -351,90 +404,32 @@ namespace ProximityDemo_Win8.FeatureWrappers
 			}
 		}
 
-
-		public event EventHandler<EventArgs<IReadOnlyList<PeerInformation>>> PeersFound = delegate { };
-		private void OnPeersFound( IReadOnlyList<PeerInformation> foundPeers )
+		public void DisconnectAndClosePeerConnections()
 		{
-			PeersFound( this, new EventArgs<IReadOnlyList<PeerInformation>>( foundPeers ) );
-		}
+			//TODO: PeerFinderWrapper 8.0 - DisconnectAndClosePeerConnections
+			/*
+			 * Deactivate the devices peer finding service via PeerFinder.Stop
+			 *		Terminates all connections
+			 */
 
-		private async void SearchForPeers()
-		{
-			State = PeerFindingState.Searching;
-			while ( State == PeerFindingState.Searching )
+			if ( State != PeerFindingState.Inactive )
 			{
-				IReadOnlyList<PeerInformation> foundPeers = await FindAvailablePeers();
-				if ( foundPeers != null )
+				PeerFinder.Stop();
+				PeerFinder.ConnectionRequested -= ConnectionRequested;
+				PeerFinder.TriggeredConnectionStateChanged -= TriggeredConnectionStateChanged;
+
+				if ( PeerSocket != null )
 				{
-					OnPeersFound( foundPeers );
+					PeerSocket.Dispose();
+					PeerSocket = null;
+					_socket = null;
 				}
+
+				State = PeerFindingState.Inactive;
 			}
 		}
 
-		private async Task<IReadOnlyList<PeerInformation>> FindAvailablePeers()
-		{
-			if ( State == PeerFindingState.Inactive )
-			{
-				return null;
-			}
 
-			IReadOnlyList<PeerInformation> peerInfoCollection = null;
-			string errorMessage = null;
-			try
-			{
-				peerInfoCollection = await PeerFinder.FindAllPeersAsync();
-			}
-			catch ( Exception e )
-			{
-				errorMessage = "Error finding peers: " + e.Message;
-			}
-
-			if ( errorMessage != null )
-			{
-				NotifyUser( errorMessage );
-				//Possibly request retry?
-			}
-
-			return peerInfoCollection;
-		}
-
-		public async Task<StreamSocketManager> ConnectToPeer( PeerInformation peerInformation )
-		{
-			switch ( State )
-			{
-				case PeerFindingState.Inactive:
-					NotifyUser( "You must first advertise for peers before trying to connect to one." );
-					return null;
-				case PeerFindingState.Connected:
-					NotifyUser( "You are already connected to a peer" );
-					return null;
-				default:
-					State = PeerFindingState.Connecting;
-					break;
-			}
-
-			string errorMessage = null;
-			try
-			{
-				_socket = await PeerFinder.ConnectAsync( peerInformation );
-				NotifyUser( "Connected to socket." );
-				PeerSocket = new StreamSocketManager( _socket );
-				NotifyUser( "Connected with manager. You may now send a message." );
-				State = PeerFindingState.Connected;
-			}
-			catch ( Exception e )
-			{
-				errorMessage = "Connection Failed: " + e.Message;
-			}
-
-			if ( errorMessage != null )
-			{
-				NotifyUser( errorMessage );
-				//Possibly request retry?
-			}
-
-			return PeerSocket;
-		}
 
 		internal static async void NotifyUser( string message )
 		{
