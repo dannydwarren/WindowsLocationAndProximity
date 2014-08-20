@@ -230,6 +230,10 @@ namespace ProximityDemo_Win8.FeatureWrappers
 			 *		Windows - Searches via WiFi Direct ONLY
 			 *		Windows Phone - Searches via BlueTooth ONLY
 			 *		NOTE: This means that Windows Apps and Windows Phone Apps can find eachother ONLY via NFC Tap to Find Peer
+			 *			Infrastructure - This is how ALL devices actually talk to eachother. Devices can communicate via infrastructure when
+			 *				they are connected to the same network on the same router. That router must NOT be blocking the specific types of 
+			 *				communication packets or connections will not succeed.
+			 *			BlueTooth - Windows Phone can break the Infrastructure rule and communicate over BlueTooth, but it's not as fast as WiFi.
 			 * 
 			 */
 
