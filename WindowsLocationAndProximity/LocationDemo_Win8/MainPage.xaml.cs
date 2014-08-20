@@ -48,7 +48,7 @@ namespace LocationDemo_Win8
 			var position = await LocationWrapper.Instance.GetSingleShotLocationAsync();
 			LogLocation( position );
 
-			//TODO: Uncomment for Constant Tracking.
+			//NOTE: Uncomment for Constant Tracking. - Use simulator to change location
 			//LocationWrapper.Instance.LocationChanged += LocationChangedHandler;
 			//LocationWrapper.Instance.ActivateContinousLocationTracking();
 		}
@@ -78,9 +78,9 @@ namespace LocationDemo_Win8
 					position.Coordinate.Heading,
 					position.Coordinate.Speed ) );
 
-			//TODO: To show off part of Converting to CivicAddress
-			//string civicAddres = await LocationWrapper.Instance.ConvertGeocoordinateToCivicAddress(position);
-			//LocationPositions.Items.Add(civicAddres);
+			//NOTE: Turn off Civic Address for Readablility
+			string civicAddres = await LocationWrapper.Instance.ConvertGeocoordinateToCivicAddress( position );
+			LocationPositions.Items.Add( new TextBlock() { Text = civicAddres, TextWrapping = Windows.UI.Xaml.TextWrapping.Wrap } );
 
 
 			if ( LocationPositions.Items.Count == 11 )

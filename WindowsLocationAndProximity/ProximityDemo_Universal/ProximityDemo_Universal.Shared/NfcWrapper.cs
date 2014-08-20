@@ -33,7 +33,7 @@ namespace ProximityDemo_Universal
 		}
 		private NfcWrapper()
 		{
-			//TODO: 0 - NfcWrapper.cs Implement Ctor and Initialize Proximity Device	
+			//TODO: NfcWrapper 0.0 - Update Manifest and Get Device
 			// For more information: http://msdn.microsoft.com/en-us/library/windowsphone/develop/jj207060(v=vs.105).aspx
 
 			/*
@@ -42,13 +42,6 @@ namespace ProximityDemo_Universal
 			 *		Enable ID_CAP_NETWORKING and ID_CAP_PROXIMITY
 			 * 
 			 * Get an instance of ProximityDevice via the Static Method GetDefault() 
-			 *	and store the value in a field
-			 * 
-			 * Set ProximityMessagingStatus
-			 *	If value == null 
-			 *		ProximityMessagingStatus.NotSupported
-			 *	else
-			 *		ProximityMessagingStatus.Idle
 			 * 
 			 */
 
