@@ -47,7 +47,6 @@ namespace ProximityDemo_Win8.FeatureWrappers
 			// For more information: http://msdn.microsoft.com/en-us/library/windowsphone/develop/jj207060(v=vs.105).aspx
 
 			/*
-			 * Update the WMAppManifest file
 			 *	Capabilities
 			 *		Enable ID_CAP_NETWORKING and ID_CAP_PROXIMITY
 			 * 
